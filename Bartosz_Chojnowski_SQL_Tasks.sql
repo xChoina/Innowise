@@ -33,7 +33,7 @@ where i.film_id is null
 
 --Output the top 3 actors who have appeared the most in movies in the “Children” category. If several actors have the same number of movies, output all of them.
 with children_films as(
-	select a.first_name , a.last_name , count(fc.film_id) as number_of_app, 
+	select a.actor_id, a.first_name , a.last_name , count(fc.film_id) as number_of_app, 
 	dense_rank() over (order by count(fc.film_id) desc) as ranking
 	from actor a 
 	inner join film_actor fa on a.actor_id = fa.actor_id
@@ -42,7 +42,7 @@ with children_films as(
 	where c.name = 'Children'
 	group by a.actor_id , a.first_name , a.last_name
 )
-select first_name, last_name, number_of_app
+select actor_id, first_name, last_name, number_of_app
 from children_films
 where ranking <=3;
 
