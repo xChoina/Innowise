@@ -1,11 +1,11 @@
 -- Output the number of movies in each category, sorted descending.
-select category.name , count(film_id) as films
+select category.category_id, category.name , count(film_id) as films
 from film_category inner join category on film_category.category_id = category.category_id
 group by category.category_id,  category.name
 order by films desc;
 
 -- Output the 10 actors whose movies rented the most, sorted in descending order.
-select a.first_name, a.last_name, count(r.rental_id ) as rental_count
+select a.actor_id, a.first_name, a.last_name, count(r.rental_id ) as rental_count
 from  film_actor fa
 inner join actor a on fa.actor_id = a.actor_id
 inner join inventory i on fa.film_id = i.film_id
@@ -28,19 +28,17 @@ from category c
 --Print the names of movies that are not in the inventory. Write a query without using the IN operator.
 select f.film_id  ,f.title
 from film f 
-except
-select f.film_id  ,f.title
-from inventory i 
-left join film f on i.film_id = f.film_id;
+left join inventory i on f.film_id = i.film_id
+where i.film_id is null
 
 --Output the top 3 actors who have appeared the most in movies in the “Children” category. If several actors have the same number of movies, output all of them.
 with children_films as(
 	select a.first_name , a.last_name , count(fc.film_id) as number_of_app, 
 	dense_rank() over (order by count(fc.film_id) desc) as ranking
 	from actor a 
-	left join film_actor fa on a.actor_id = fa.actor_id
-	left join film_category fc on fa.film_id = fc.film_id
-	left join category c on fc.category_id = c.category_id
+	inner join film_actor fa on a.actor_id = fa.actor_id
+	inner join film_category fc on fa.film_id = fc.film_id
+	inner join category c on fc.category_id = c.category_id
 	where c.name = 'Children'
 	group by a.actor_id , a.first_name , a.last_name
 )
@@ -60,7 +58,10 @@ order by inactive_customers desc;
 
 --Output the category of movies that have the highest number of total rental hours in the city (customer.address_id in this city) and that start with the letter “a”. Do the same for cities that have a “-” in them. Write everything in one query.
 with categories_by_city_hours as(
-	select c3.city, c.name, round(sum(extract(epoch from (r.return_date-r.rental_date))/3600),0) as total_hours
+	select c3.city, c.name, r.rental_date, r.return_date, case 
+		when c3.city ilike 'a%' then 'Cities start with A'
+		when c3.city like '%-%' then 'Cities with -'
+	end as city_group
 	from category c 
 	inner join film_category fc on c.category_id = fc.category_id
 	inner join inventory i on fc.film_id = i.film_id 
@@ -69,16 +70,17 @@ with categories_by_city_hours as(
 	inner join address a on c2.address_id = a.address_id
 	inner join city c3  on a.city_id = c3.city_id
 	where city ilike 'a%' or city like '%-%'
-	group by c3.city, c.name
 ),
 cities_rank as(
-	select city, name, total_hours,
-	dense_rank() over( partition by city order by total_hours desc) as ranking
+	select city_group, name, round(sum(extract(epoch from (return_date-rental_date))/3600),0) as total_hours,
+	dense_rank() over( partition by city_group order by round(sum(extract(epoch from (return_date-rental_date))/3600),0) desc) as ranking
 	from categories_by_city_hours
+	group by city_group, name
 )
-select city, name,  total_hours
+select city_group, name , total_hours
 from cities_rank 
-where ranking = 1;
+where ranking = 1
+
 
 
 
