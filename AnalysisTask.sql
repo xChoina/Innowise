@@ -21,8 +21,9 @@ select f.id, f.name, coalesce(l.log_count, 0) as log_count, a.max_amount as amou
 from fil_users f
 left join log_data l on f.id = l.user_id
 left join amount_data a on f.id = a.user_id
-union
+union all
 select id, name, 0 as log_count, 0 as amount
 from users
 where status='DELETED'
-order by log_count desc
+and (registration_phone != '79991112233' or registration_phone IS NULL)
+order by log_count desc;
