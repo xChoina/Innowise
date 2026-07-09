@@ -17,11 +17,11 @@ amount_data as(
 	group by user_id
 	
 ) 
-select f.id, f.name, coalesce(l.log_count, 0) as log_count, a.max_amount
+select f.id, f.name, coalesce(l.log_count, 0) as log_count, a.max_amount as amount
 from fil_users f
 left join log_data l on f.id = l.user_id
 left join amount_data a on f.id = a.user_id
-union all
+union
 select id, name, 0 as log_count, 0 as amount
 from users
 where status='DELETED'

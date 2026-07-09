@@ -15,13 +15,13 @@ order by rental_count desc
 limit 10;
 
 --Output the category of movies on which the most money was spent.
-select c.name , sum(p.amount) as sum_of_amount  
+select c.category_id, c.name , sum(p.amount) as sum_of_amount  
 from category c 
  inner join film_category fc on c.category_id = fc.category_id
  inner join inventory i on fc.film_id = i.film_id 
  inner join rental r on i.inventory_id = r.inventory_id 
  inner join payment p on r.rental_id = p.rental_id 
- group by c.category_id , c.name
+ group by c.category_id, c.name
  order by sum_of_amount  desc
  limit 1;
 
@@ -29,7 +29,7 @@ from category c
 select f.film_id  ,f.title
 from film f 
 left join inventory i on f.film_id = i.film_id
-where i.film_id is null
+where i.film_id is null;
 
 --Output the top 3 actors who have appeared the most in movies in the “Children” category. If several actors have the same number of movies, output all of them.
 with children_films as(
@@ -47,13 +47,13 @@ from children_films
 where ranking <=3;
 
 --Output cities with the number of active and inactive customers (active - customer.active = 1). Sort by the number of inactive customers in descending order.
-select c2.city,
+select c2.city_id, c2.city,
 count(case when c.active = 1 then 1 end) as active_customers,
 count(case when c.active = 0 then 1 end) as inactive_customers
 from customer c 
 inner join address a on c.address_id = a.address_id
 inner join city c2  on a.city_id = c2.city_id
-group by c2.city_id , c2.city 
+group by c2.city_id, c2.city 
 order by inactive_customers desc;
 
 --Output the category of movies that have the highest number of total rental hours in the city (customer.address_id in this city) and that start with the letter “a”. Do the same for cities that have a “-” in them. Write everything in one query.
